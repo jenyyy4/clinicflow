@@ -1,5 +1,5 @@
-# ClinicFlow CD — use this file when final-devops-project/ is its own repository
-# (the monorepo copy lives at <repo>/.github/workflows/session21-cd.yml).
+# ClinicFlow CD pipeline (GitOps)
+# Runs after a successful CI run on main.
 #
 # Runs only after the CI workflow finished *successfully* on main (or manually).
 #

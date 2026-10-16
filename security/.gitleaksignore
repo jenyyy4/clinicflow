@@ -1,4 +1,5 @@
 # Reviewed false positives (gitleaks fingerprints). Keep this list short and justify every entry.
-# security/README.md in commit c246ec7 documented the custom DB-URL rule with an example URL that
-# contains the literal placeholder text "<password>" - not a credential. The text was reworded afterwards.
-c246ec7f5a307eda766c977c66b6d28fab58de8f:session21-python/final-devops-project/security/README.md:clinicflow-database-url-password:32
+# security/README.md in the first capstone commit documented the custom DB-URL rule with an example
+# URL that contains the literal placeholder text "<password>" - not a credential. The text was reworded
+# afterwards. (Fingerprint = commit:path:rule:line; the commit SHA is this repo's, after the subtree split.)
+8a4eadaef13b022b1a2436d45da5281390fc39c3:security/README.md:clinicflow-database-url-password:32

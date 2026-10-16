@@ -1,5 +1,5 @@
-# ClinicFlow CI — use this file when final-devops-project/ is its own repository
-# (the monorepo copy lives at <repo>/.github/workflows/session21-ci.yml).
+# ClinicFlow CI pipeline
+# Runs on every push / pull request to main.
 #
 #   lint ─┐
 #   test ─┤

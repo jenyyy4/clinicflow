@@ -12,9 +12,9 @@ metadata:
 spec:
   project: clinicflow
   source:
-    repoURL: https://github.com/jenyyy4/devops-heros.git
+    repoURL: https://github.com/jenyyy4/clinicflow.git
     targetRevision: main
-    path: session21-python/final-devops-project/helm/clinicflow
+    path: helm/clinicflow
     helm:
       releaseName: clinicflow
       valueFiles:

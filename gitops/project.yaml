@@ -8,8 +8,8 @@ spec:
   description: ClinicFlow capstone (Session 21)
   sourceRepos:
     - git://host.minikube.internal/clinicflow-gitops      # local demo repo (git daemon)
-    - https://github.com/jenyyy4/devops-heros.git         # real-world repo
-    - https://github.com/jenyyy4/devops-heros
+    - https://github.com/jenyyy4/clinicflow.git           # real-world repo
+    - https://github.com/jenyyy4/clinicflow
   destinations:
     - server: https://kubernetes.default.svc
       namespace: clinicflow

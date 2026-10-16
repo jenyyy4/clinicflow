@@ -110,7 +110,7 @@ The request path is: browser → Ingress (`/` → frontend, `/api` → backend) 
 ## 2. Repository structure
 
 ```text
-final-devops-project/
+clinicflow/
 ├── backend/                  FastAPI app
 │   ├── app/                  main.py, routers/ (doctors, patients, appointments), models, schemas, metrics, db, config
 │   ├── alembic/versions/     0001_create_clinic_tables, 0002_seed_doctors
@@ -125,14 +125,14 @@ final-devops-project/
 ├── gitops/                   Argo CD AppProject + Applications, env values, local git helper
 ├── security/                 run-security-scans.sh (9-check gate) + scanner configs
 ├── troubleshooting/          9 broken/fixed scenarios + write-up
-├── scripts/                  seed-demo.sh, load-test.sh, sync-root-workflows.sh
-├── .github/workflows/        ci.yml, cd.yml  (standalone-repo version)
+├── scripts/                  seed-demo.sh, load-test.sh
+├── .github/workflows/        ci.yml, cd.yml
 └── screenshots/              01-109, real captures
 ```
 
 ![project tree](screenshots/01-project-tree.png)
 
-> **Where GitHub runs the workflows.** This project is a sub-folder of the `devops-heros` monorepo, and GitHub only runs workflows from the repo root. [`scripts/sync-root-workflows.sh`](scripts/sync-root-workflows.sh) therefore **generates** `/.github/workflows/session21-ci.yml` and `session21-cd.yml` from the files here. The generated copies add a `paths:` filter and point `APP_DIR` at this folder. If this folder becomes its own repository, the files in `.github/workflows/` work unchanged.
+> **History.** This project started as `session21-python/final-devops-project/` in the [`devops-heros`](https://github.com/jenyyy4/devops-heros) course repo. It was copied here with its own commit history (`git subtree split`), so this repo is self-contained and its workflows run from the repo root.
 
 ---
 
@@ -231,7 +231,7 @@ cd frontend && npm test && npm run build                            # 5 node:tes
 
 ## 5. M3: Git and GitHub
 
-* Repository: **https://github.com/jenyyy4/devops-heros** (public). This capstone is `session21-python/final-devops-project/`.
+* Repository: **https://github.com/jenyyy4/clinicflow** (public). It was split out of the course repo [`devops-heros`](https://github.com/jenyyy4/devops-heros), keeping this project's commit history.
 * `.gitignore` files exclude `.env`/`*.env` (except `.env.example`), `__pycache__/`, `node_modules/`, `.venv/`, `dist/`, `.terraform/`, `*.tfstate*`, `test.db`, coverage and report folders.
 * The history has 85+ commits. The ClinicFlow rebuild went in as separate commits (layout, backend, frontend, infrastructure rename, CI/CD, docs), followed by the CD bot commit. See [screenshot 109](screenshots/109-github-commit-history.png).
 * No secrets in history: gitleaks scans the **whole git history** of this folder in CI, and it was run locally too (screenshot 23).

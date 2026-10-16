@@ -13,7 +13,7 @@ variable "environment" {
 variable "owner" {
   description = "Owner tag (team or person)."
   type        = string
-  default     = "devops-heros"
+  default     = "jenyyy4"
 }
 
 variable "azs" {

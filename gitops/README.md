@@ -5,7 +5,7 @@ Argo CD deploys the **same Helm chart** (`helm/clinicflow`) from Git, using auto
 ```
 gitops/
 ├── argocd-application.yaml          LOCAL demo Application (applied): git://host.minikube.internal/clinicflow-gitops
-├── argocd-application-github.yaml   real-world Application -> github.com/jenyyy4/devops-heros (prepared, NOT applied yet -> ns clinicflow-prod)
+├── argocd-application-github.yaml   real-world Application -> github.com/jenyyy4/clinicflow (prepared, NOT applied yet -> ns clinicflow-prod)
 ├── project.yaml                     AppProject "clinicflow": allowed repos + only namespaces clinicflow / clinicflow-prod
 ├── apps/clinicflow/values-local.yaml          environment values for the local cluster (THIS is what you edit + commit)
 ├── apps/clinicflow/values-prod-minikube.yaml  laptop overrides for the GitHub-sourced prod Application
@@ -18,7 +18,7 @@ gitops/
 | Application | Source | Value files | Image tag keys that CD bumps |
 |-------------|--------|-------------|------------------------------|
 | `clinicflow` (local, applied) | `git://host.minikube.internal/clinicflow-gitops`, path `helm/clinicflow` | `values.yaml` and `../../gitops/apps/clinicflow/values-local.yaml` | `.backend.image.tag` and `.frontend.image.tag` in `gitops/apps/clinicflow/values-local.yaml` |
-| `clinicflow-prod` (GitHub, **not applied yet**, ns `clinicflow-prod`) | `https://github.com/jenyyy4/devops-heros.git`, path `session21-python/final-devops-project/helm/clinicflow` | `values.yaml`, `values-prod.yaml`, `../../gitops/apps/clinicflow/values-prod-minikube.yaml` | `.backend.image.tag` and `.frontend.image.tag` in `helm/clinicflow/values-prod.yaml` |
+| `clinicflow-prod` (GitHub, **not applied yet**, ns `clinicflow-prod`) | `https://github.com/jenyyy4/clinicflow.git`, path `helm/clinicflow` | `values.yaml`, `values-prod.yaml`, `../../gitops/apps/clinicflow/values-prod-minikube.yaml` | `.backend.image.tag` and `.frontend.image.tag` in `helm/clinicflow/values-prod.yaml` |
 
 The flow is the same in both cases. CI builds the images and pushes them to GHCR. CD commits the new tag into the values file. Argo CD notices the commit and rolls the cluster forward.
 

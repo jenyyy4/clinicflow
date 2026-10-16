@@ -8,7 +8,7 @@ set -euo pipefail
 PROJECT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="${GITOPS_SRC:-$HOME/gitops-src}"
 REPO="$SRC/clinicflow-gitops"
-MSG="${1:-sync from final-devops-project}"
+MSG="${1:-sync from clinicflow}"
 
 mkdir -p "$REPO"
 if [ ! -d "$REPO/.git" ]; then

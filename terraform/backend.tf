@@ -25,7 +25,7 @@
 # terraform {
 #   backend "s3" {
 #     bucket         = "clinicflow-tfstate-<account-id>"
-#     key            = "final-devops-project/dev/terraform.tfstate"
+#     key            = "clinicflow/dev/terraform.tfstate"
 #     region         = "ap-south-1"
 #     dynamodb_table = "clinicflow-tf-locks"
 #     encrypt        = true

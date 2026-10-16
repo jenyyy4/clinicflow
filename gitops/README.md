@@ -5,7 +5,7 @@ Argo CD deploys the **same Helm chart** (`helm/clinicflow`) from Git, using auto
 ```
 gitops/
 ├── argocd-application.yaml          LOCAL demo Application (applied): git://host.minikube.internal/clinicflow-gitops
-├── argocd-application-github.yaml   real-world Application -> github.com/jenyyy4/clinicflow (prepared, NOT applied yet -> ns clinicflow-prod)
+├── argocd-application-github.yaml   real-world Application -> github.com/jenyyy4/clinicflow (applied -> ns clinicflow-prod)
 ├── project.yaml                     AppProject "clinicflow": allowed repos + only namespaces clinicflow / clinicflow-prod
 ├── apps/clinicflow/values-local.yaml          environment values for the local cluster (THIS is what you edit + commit)
 ├── apps/clinicflow/values-prod-minikube.yaml  laptop overrides for the GitHub-sourced prod Application
@@ -18,13 +18,13 @@ gitops/
 | Application | Source | Value files | Image tag keys that CD bumps |
 |-------------|--------|-------------|------------------------------|
 | `clinicflow` (local, applied) | `git://host.minikube.internal/clinicflow-gitops`, path `helm/clinicflow` | `values.yaml` and `../../gitops/apps/clinicflow/values-local.yaml` | `.backend.image.tag` and `.frontend.image.tag` in `gitops/apps/clinicflow/values-local.yaml` |
-| `clinicflow-prod` (GitHub, **not applied yet**, ns `clinicflow-prod`) | `https://github.com/jenyyy4/clinicflow.git`, path `helm/clinicflow` | `values.yaml`, `values-prod.yaml`, `../../gitops/apps/clinicflow/values-prod-minikube.yaml` | `.backend.image.tag` and `.frontend.image.tag` in `helm/clinicflow/values-prod.yaml` |
+| `clinicflow-prod` (GitHub, **applied**, ns `clinicflow-prod`) | `https://github.com/jenyyy4/clinicflow.git`, path `helm/clinicflow` | `values.yaml`, `values-prod.yaml`, `../../gitops/apps/clinicflow/values-prod-minikube.yaml` | `.backend.image.tag` and `.frontend.image.tag` in `helm/clinicflow/values-prod.yaml` |
 
 The flow is the same in both cases. CI builds the images and pushes them to GHCR. CD commits the new tag into the values file. Argo CD notices the commit and rolls the cluster forward.
 
-### `clinicflow-prod` is prepared but not applied
+### Applying `clinicflow-prod`
 
-Nothing from this rebuild has been pushed to GitHub yet, so `argocd-application-github.yaml` would point at a repo that does not contain this version of the chart yet, and GHCR has no ClinicFlow images with the tag in `values-prod.yaml`. Only the local Application was applied in this run. After the push, once CI/CD has published images to GHCR:
+These are the steps that were run on the `session21` cluster. They need CI/CD to have published images to GHCR first:
 
 ```bash
 kubectl create namespace clinicflow-prod

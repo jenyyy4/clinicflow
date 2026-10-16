@@ -50,9 +50,9 @@ Environment: macOS on Apple Silicon, Docker Desktop (4 GB VM), minikube profile 
 | **M2** Tests | pytest passes; ≥5 tests over ≥3 endpoints; test DB, not prod; `pytest.ini`/`conftest.py` | **37 tests, 100% coverage**, SQLite test DB set in [`conftest.py`](backend/tests/conftest.py), [`pytest.ini`](backend/pytest.ini). Plus 5 frontend unit tests. Screenshots 10-12 |
 | **M3** Git | Public repo; meaningful commits; `.gitignore` for `.env`, `__pycache__`, `node_modules`, `.venv` | [`.gitignore`](.gitignore) plus per-app ignores. See [§5](#5-m3-git-and-github) |
 | **M4** Docker | Backend Dockerfile builds; multi-stage frontend (Node → Nginx); non-root; `docker compose up --build` runs all 3 | [`backend/Dockerfile`](backend/Dockerfile) (uid 10001), [`frontend/Dockerfile`](frontend/Dockerfile) (nginx-unprivileged, uid 101), [`docker-compose.yml`](docker-compose.yml). Screenshots 13, 17, 02 |
-| **M5** CI/CD | Workflow on push to `main`; pytest gates; frontend build; both images; GHCR; SHA tags | [`.github/workflows/ci.yml`](.github/workflows/ci.yml), [`cd.yml`](.github/workflows/cd.yml). [CI run 38894500767](https://github.com/jenyyy4/devops-heros/actions/runs/38894500767) (11/11 green), GHCR images tagged with the commit SHA, CD bot commit. Screenshots 100-108 |
+| **M5** CI/CD | Workflow on push to `main`; pytest gates; frontend build; both images; GHCR; SHA tags | [`.github/workflows/ci.yml`](.github/workflows/ci.yml), [`cd.yml`](.github/workflows/cd.yml). [CI run 38900307935](https://github.com/jenyyy4/clinicflow/actions/runs/38900307935) (11/11 green), GHCR images tagged with the commit SHA, CD bot commit. Screenshots 100-108 |
 | **M6** Trivy | Trivy on both images in CI; fails on HIGH/CRITICAL; explain a CVE / clean result | `image-scan` job and [`security/trivy.yaml`](security/trivy.yaml). Explanation in [§8](#8-m6-devsecops-and-trivy). Screenshots 20-23, and 103 (Trivy in the CI run) |
-| **M7** Terraform | Valid HCL; init; plan; VPC with 2+ public subnets; EKS + node group; destroy; `tfvars.example` | [`terraform/`](terraform/): plan **47 to add**, apply, verify, destroy **47 destroyed**. [`terraform.tfvars.example`](terraform/terraform.tfvars.example). Screenshots 30-37 |
+| **M7** Terraform | Valid HCL; init; plan; VPC with 2+ public subnets; EKS + node group; destroy; `tfvars.example` | [`terraform/`](terraform/): applied to **real AWS** (`ap-south-1`): plan **47 to add**, apply, VPC + subnets + EKS + node group in the AWS Console, then destroy. [`terraform.tfvars.example`](terraform/terraform.tfvars.example). Screenshots 38a-39 (real AWS) and 30-37 (Moto dry run) |
 | **M8** K8s + Helm | `k8s/namespace.yaml`; chart; `helm upgrade --install`; ≥2 replicas each; ClusterIP services; Ingress `/` and `/api`; all pods Running | [`k8s/`](k8s/), [`helm/clinicflow/`](helm/clinicflow/). Screenshots 40-55 (52 = pods, svc, `helm list`; 54 = UI through the Ingress hostname) |
 | **M9** Observability | `/metrics`; Prometheus scraping (UP); Grafana; a live panel | [`monitoring/`](monitoring/). Screenshots 18, 61 (`/metrics`), 62 (Targets **UP**), 64 (Grafana dashboard with 13 panels), 65 (alert firing) |
 | **M10** Docs + demo | Root README explaining the app; live demo (commit → pipeline → deployment update) | This file. Demo script in [§14](#14-m10-live-demo-script) |
@@ -292,7 +292,9 @@ All four workflow files (the two here and the two generated root copies) pass **
 
 | Run | Result |
 |---|---|
-| [CI #4: run 38894500767](https://github.com/jenyyy4/devops-heros/actions/runs/38894500767), commit `7597c29` | ✅ **All 11 jobs green** in 3m14s. pytest: 37 passed, 100% coverage. Trivy on both images: 0 HIGH/CRITICAL. Images pushed to GHCR. |
+| [CI: run 38900307935](https://github.com/jenyyy4/clinicflow/actions/runs/38900307935) (this repo), commit `2d379cb` | ✅ **All 11 jobs green.** The first attempt failed only at the GHCR push (`permission_denied: write_package`): the packages were created by the old course repo, so this repo had to be granted **Write** under each package's *Manage Actions access*. Re-running the failed job pushed both images tagged `2d379cb3…`. |
+| [CD: run 38903250766](https://github.com/jenyyy4/clinicflow/actions/runs/38903250766) (this repo) | ✅ Bot commit `f6cbde2 chore(gitops): deploy clinicflow 2d379cb`. Argo CD (`clinicflow-prod`, GitHub source) picked it up and rolled both Deployments to `2d379cb3…`: **Synced/Healthy**. |
+| [CI #4: run 38894500767](https://github.com/jenyyy4/devops-heros/actions/runs/38894500767) (course repo, before the split), commit `7597c29` | ✅ **All 11 jobs green** in 3m14s. pytest: 37 passed, 100% coverage. Trivy on both images: 0 HIGH/CRITICAL. Images pushed to GHCR. |
 | [CD: run 38894861599](https://github.com/jenyyy4/devops-heros/actions/runs/38894861599) | ✅ `gitops-update` committed [`f8d04d5`](https://github.com/jenyyy4/devops-heros/commit/f8d04d5) as `github-actions[bot]`, pinning `7597c293…` in `values-prod.yaml` (it was the old TaskBoard tag `86cb243…`). `helm-deploy` was skipped (no `KUBECONFIG` secret). |
 | GHCR | [`clinicflow-backend`](https://github.com/users/jenyyy4/packages/container/package/clinicflow-backend) and [`clinicflow-frontend`](https://github.com/users/jenyyy4/packages/container/package/clinicflow-frontend) are **public**, tagged `7597c293298bb0891f6983e6896b64c5506ec136` + `latest`. The registry digests match the CI push log. |
 
@@ -352,7 +354,7 @@ Trivy gate inside the real CI run (both images clean, gate passed):
 [`terraform/`](terraform/) describes the AWS infrastructure in `ap-south-1`. Everything lives in one in-repo module, [`modules/clinicflow-infra`](terraform/modules/clinicflow-infra), built from plain `aws_*` resources:
 
 * **VPC** `10.20.0.0/16` across 2 AZs, with **2 public and 2 private subnets**, an Internet Gateway, a NAT Gateway, route tables and VPC flow logs.
-* **EKS** 1.31 with a **managed node group** (2-4 × t3.medium) in the private subnets, KMS-encrypted secrets and IMDSv2.
+* **EKS** 1.36 with a **managed node group** (2 × t3.medium by default) in the private subnets, KMS-encrypted secrets and IMDSv2.
 * Least-privilege security groups, IAM roles, and optional ECR repositories.
 
 Inputs are documented in [`terraform.tfvars.example`](terraform/terraform.tfvars.example); no credentials are committed. Commands for a real account:
@@ -364,7 +366,28 @@ $(terraform output -raw configure_kubectl) && kubectl get nodes
 terraform destroy
 ```
 
-**How it was run here.** There is no AWS account available for this course, so the **same module** was applied end to end against **Moto**, a local AWS API mock, using [`environments/local-mock`](terraform/environments/local-mock). The sequence was:
+### Real AWS run (account `617394174317`, `ap-south-1`)
+
+1. `terraform init` and `terraform plan -out=tfplan`: **47 to add** (38a)
+2. `terraform apply tfplan`: VPC, subnets, NAT, EKS control plane and node group created (38b)
+3. AWS Console: `clinicflow-dev-vpc` Available (38c), the 2 public + 2 private `clinicflow-dev-*` subnets (38d), `clinicflow-dev-eks` **Active** on 1.36 (38e), node group `clinicflow-dev-default` **Active** with 2 nodes (38f). `kubectl get nodes` showed both nodes `Ready`.
+4. `terraform destroy`: everything removed, nothing left in state (39)
+
+Two real-account issues came up and are worth knowing:
+
+* **EKS version cost.** The original default, 1.31, is past standard support. AWS still creates it, but bills **extended support at 6× the hourly control-plane price**. The default is now 1.36 (`aws eks describe-cluster-versions` lists what is in standard support).
+* **Free-plan accounts only launch free-tier instance types.** The node group sat in `CREATING` while the Auto Scaling group logged `The specified instance type is not eligible for Free Tier` for t3.medium. Switching `node_instance_types` to `c7i-flex.large` (eligible, 2 vCPU / 4 GiB) in `terraform.tfvars` fixed it, and the re-apply replaced the node group. New accounts also have a 5-vCPU on-demand quota, so the node group was capped at 2 nodes.
+
+| | |
+|---|---|
+| ![plan](screenshots/38a-aws-terraform-plan.png) | ![apply](screenshots/38b-aws-terraform-apply.png) |
+| ![vpc](screenshots/38c-aws-console-vpc.png) | ![subnets](screenshots/38d-aws-console-subnets.png) |
+| ![eks cluster](screenshots/38e-aws-console-eks-cluster.png) | ![node group](screenshots/38f-aws-console-eks-nodegroup.png) |
+| ![destroy](screenshots/39-aws-terraform-destroy.png) | |
+
+### Moto dry run
+
+Before touching a real account, the **same module** was applied end to end against **Moto**, a local AWS API mock, using [`environments/local-mock`](terraform/environments/local-mock). The sequence was:
 
 1. `fmt`/`validate` on both roots
 2. `init`
@@ -380,7 +403,7 @@ terraform destroy
 | ![verify](screenshots/35-moto-verify-vpc-eks.png) | ![destroy](screenshots/37-terraform-destroy.png) |
 | ![fmt validate](screenshots/30-terraform-fmt-validate.png) | ![checkov](screenshots/36-checkov-iac-scan.png) |
 
-Also see [31 init](screenshots/31-terraform-init.png) and [34 outputs/state](screenshots/34-terraform-output-state.png). The boto3 listing in screenshot 35 stands in for the "AWS Console" screenshot; see [§15](#15-known-limitations).
+Also see [31 init](screenshots/31-terraform-init.png) and [34 outputs/state](screenshots/34-terraform-output-state.png).
 
 ---
 
@@ -475,7 +498,7 @@ Argo CD v3.5.4 was installed lean: dex, notifications, applicationset and the UI
 | Prune | `autoscaling.enabled: false` in Git → Argo **deleted** the HPA (`status=Pruned`) | 75 |
 | Roll forward | Restore commit; the 4 Git commits match the 4 entries in Argo's sync history | 76 |
 
-The demo source is a local Git repo served by `git daemon` ([`gitops/sync-local-repo.sh`](gitops/sync-local-repo.sh)), the Session 20 approach. The **GitHub-sourced** Application [`gitops/argocd-application-github.yaml`](gitops/argocd-application-github.yaml) watches `values-prod.yaml`, the file CD bumps. It is the end-to-end path GitHub → CI → GHCR → CD commit → Argo CD → cluster, The CD side of that path ran on GitHub (§7). Applying this Application to a cluster completes it.
+The demo source is a local Git repo served by `git daemon` ([`gitops/sync-local-repo.sh`](gitops/sync-local-repo.sh)), the Session 20 approach. The **GitHub-sourced** Application [`gitops/argocd-application-github.yaml`](gitops/argocd-application-github.yaml) watches `values-prod.yaml`, the file CD bumps. It is the end-to-end path GitHub → CI → GHCR → CD commit → Argo CD → cluster, and it is **applied** on the `session21` minikube cluster (namespace `clinicflow-prod`, DB credentials in the pre-created `clinicflow-db-prod` Secret). The CD bot commit `f6cbde2` rolled both Deployments to `2d379cb3…` with no manual step (§7).
 
 | | |
 |---|---|
@@ -532,8 +555,7 @@ Each step below covers one stage of the brief: Application → Git commit → CI
 
 | Item | Status |
 |---|---|
-| AWS Console screenshot (M7) | No AWS account is available, so Terraform ran against **Moto**. The same module and the same commands work on real AWS: `terraform/main.tf` plus a tfvars file, at about USD 5-6/day; destroy straight after grading. The boto3 listing (35) shows the VPC, subnets and an `ACTIVE` EKS cluster and node group in the mock instead. |
-| Argo CD deploying from GitHub | CI, GHCR and the CD tag bump ran on GitHub (§7). The cluster was deleted after the demo, so the GitHub-sourced Argo Application (`gitops/argocd-application-github.yaml`) was not re-applied for ClinicFlow. The Argo demo used the local Git source (§12). |
+| EKS torn down after the run (M7) | The real EKS cluster was destroyed right after the Console screenshots to avoid charges, so the app itself runs on minikube, not EKS. The chart is the same; on EKS only `values-prod-minikube.yaml` is dropped. |
 | Ingress on macOS | The docker driver's node IP isn't routable from the Mac, so the Ingress controller is port-forwarded (`:8080`) and the hostname is resolved to `127.0.0.1`. |
 | In-cluster Postgres | Fine for the demo. Use RDS in production (see [§10](#10-m8-kubernetes-and-helm)). |
 

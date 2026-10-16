@@ -3,9 +3,14 @@
 # repository + tag still come from values-prod.yaml (the file the CD workflow bumps).
 # Only infrastructure the laptop does not have is switched off / scaled down here.
 backend:
+  # CI publishes linux/amd64 images; on an Apple Silicon laptop they run under QEMU
+  # emulation, so imports + Alembic take minutes, not seconds. More CPU headroom and a
+  # 6-minute startup window stop the startup probe from killing pods mid-boot.
   resources:
     requests: {cpu: 100m, memory: 128Mi}
-    limits: {cpu: 500m, memory: 384Mi}
+    limits: {cpu: 1500m, memory: 384Mi}
+  probes:
+    startup: {failureThreshold: 72}
 frontend:
   replicaCount: 2
 postgres:
